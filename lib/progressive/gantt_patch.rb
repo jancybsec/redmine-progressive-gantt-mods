@@ -14,7 +14,6 @@ module Progressive::GanttPatch
           line_for_issue(i, options) unless options[:only] == :subjects
           options[:top] += options[:top_increment]
           @number_of_rows += 1
-          break if abort?
         end
         options[:indent] -= (options[:indent_increment] * @issue_ancestors.size)
       end
@@ -26,14 +25,26 @@ module Progressive::GanttPatch
           case options[:format]
           when :html
             label += " - #{issue.subject}" if options[:show_subject_lines]
-            html_task(options, coords,
+            if Redmine::VERSION::MAJOR == 2
+              html_task(options, coords,
                       :css => "task " + (issue.leaf? ? 'leaf' : 'parent'),
                       :label => label, :issue => issue,
                       :markers => !issue.leaf?)
+            else
+              html_task(options, coords, !issue.leaf?, label, Version)
+            end
           when :image
-            image_task(options, coords, :label => label)
+            if Redmine::VERSION::MAJOR == 2
+              image_task(options, coords, :label => label)
+            else
+              image_task(options, coords, true, label, Version)
+            end
           when :pdf
-            pdf_task(options, coords, :label => label)
+            if Redmine::VERSION::MAJOR == 2
+              pdf_task(options, coords, :label => label)
+            else
+              pdf_task(options, coords, true, label, Version)
+            end
         end
         else
           ''
